@@ -4,14 +4,13 @@ name: Build APK
 on:
   push:
     branches: [main]
-    tags: ['v*']          # إنشاء إصدار عند وسم v1.0.0 مثلاً
-  workflow_dispatch:       # تشغيل يدوي من تبويب Actions
+    tags: ['v*']
+  workflow_dispatch:
 
 permissions:
-  contents: write          # مطلوب لرفع الـ APK إلى Releases
+  contents: write
 
 env:
-  # اختياري: توقيع الإصدار بمفتاحك (أضفها في Settings > Secrets > Actions)
   KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
   KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
   KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -23,51 +22,103 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
 
+      # يجد مجلد المشروع (الذي فيه lib/main.dart) ويكمل الملفات الناقصة
+      # (pubspec.yaml و android/) تلقائياً دون المساس بملفاتك.
+      - name: Locate and bootstrap Flutter project
+        run: |
+          set -e
+          MAIN=$(find . -maxdepth 3 -path '*/lib/main.dart' | head -n1)
+          if [ -z "$MAIN" ]; then
+            echo "::error::lib/main.dart not found in the repository"; exit 1
+          fi
+          APP_DIR=$(dirname "$(dirname "$MAIN")")
+          echo "APP_DIR=$APP_DIR" >> "$GITHUB_ENV"
+          cd "$APP_DIR"
+
+          GEN_PUBSPEC=0
+          [ -f pubspec.yaml ] || GEN_PUBSPEC=1
+          if [ ! -f pubspec.yaml ] || [ ! -d android ]; then
+            flutter create --project-name apk_server --org com.example /tmp/proj
+            cp -rn /tmp/proj/. .
+          fi
+          if [ "$GEN_PUBSPEC" = 1 ]; then
+            rm -rf test
+            flutter pub add shelf file_picker qr_flutter network_info_plus \
+              connectivity_plus path_provider flutter_foreground_task dartssh2
+          fi
+
+      # يضيف كود أندرويد (قراءة الـ APK) وصلاحيات الخدمة الأمامية إن وُجد android_files/
+      - name: Apply Android files
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          set -e
+          [ -f android_files/MainActivity.kt ] || { echo "no android_files, skipping"; exit 0; }
+          PKG=$(grep -ohP 'namespace\s*=?\s*"\K[^"]+' android/app/build.gradle* | head -n1)
+          DIR="android/app/src/main/kotlin/$(echo "$PKG" | tr . /)"
+          find android/app/src/main -name 'MainActivity.*' -delete
+          mkdir -p "$DIR"
+          sed "s/^package .*/package $PKG/" android_files/MainActivity.kt > "$DIR/MainActivity.kt"
+          python3 - <<'PY'
+          p = 'android/app/src/main/AndroidManifest.xml'
+          s = open(p, encoding='utf-8').read()
+          if 'FOREGROUND_SERVICE_SPECIAL_USE' not in s:
+              perms = ''.join(
+                  f'    <uses-permission android:name="android.permission.{n}"/>\n'
+                  for n in ['INTERNET', 'ACCESS_WIFI_STATE', 'ACCESS_NETWORK_STATE',
+                            'WAKE_LOCK', 'POST_NOTIFICATIONS', 'FOREGROUND_SERVICE',
+                            'FOREGROUND_SERVICE_SPECIAL_USE',
+                            'REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'])
+              svc = ('    <service android:name="com.pravera.flutter_foreground_task.service.ForegroundService"\n'
+                     '        android:foregroundServiceType="specialUse" android:exported="false">\n'
+                     '        <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"\n'
+                     '            android:value="personal_http_server"/>\n'
+                     '    </service>\n')
+              s = s.replace('<application', perms + '    <application', 1)
+              s = s.replace('</application>', svc + '    </application>', 1)
+              open(p, 'w', encoding='utf-8').write(s)
+          PY
+
       - name: Restore signing key (optional)
         if: ${{ env.KEYSTORE_BASE64 != '' }}
+        working-directory: ${{ env.APP_DIR }}
         run: |
           echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
-          cat > android/key.properties <<EOF
-          storePassword=$KEYSTORE_PASSWORD
-          keyPassword=$KEY_PASSWORD
-          keyAlias=$KEY_ALIAS
-          storeFile=upload-keystore.jks
-          EOF
+          printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=upload-keystore.jks\n' \
+            "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
 
       - name: Install dependencies
+        working-directory: ${{ env.APP_DIR }}
         run: flutter pub get
 
       - name: Analyze
+        working-directory: ${{ env.APP_DIR }}
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
-      - name: Build APK (split per ABI)
+      - name: Build APK
+        working-directory: ${{ env.APP_DIR }}
         run: flutter build apk --release --split-per-abi
 
-      - name: Upload APKs
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: apk-release
-          path: build/app/outputs/flutter-apk/*.apk
+          path: ${{ env.APP_DIR }}/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/app/outputs/flutter-apk/*.apk
+          files: ${{ env.APP_DIR }}/build/app/outputs/flutter-apk/*.apk
           generate_release_notes: true
