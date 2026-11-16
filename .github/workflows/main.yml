@@ -39,9 +39,19 @@ jobs:
       - name: Locate and bootstrap Flutter project
         run: |
           set -e
-          MAIN=$(find . -maxdepth 3 -path '*/lib/main.dart' | head -n1)
+          find_main() { find . -path ./.git -prune -o -path '*/lib/main.dart' -print | head -n1; }
+          MAIN=$(find_main)
+          # إن رُفع المشروع كملف zip داخل المستودع، نفكّه تلقائياً
           if [ -z "$MAIN" ]; then
-            echo "::error::lib/main.dart not found in the repository"; exit 1
+            for z in $(find . -maxdepth 3 -name '*.zip' -not -path './.git/*'); do
+              unzip -oq "$z" -d _extracted || true
+            done
+            MAIN=$(find_main)
+          fi
+          if [ -z "$MAIN" ]; then
+            echo "::error::lib/main.dart not found. Repository contents:"
+            find . -path ./.git -prune -o -type f -print | head -n 60
+            exit 1
           fi
           APP_DIR=$(dirname "$(dirname "$MAIN")")
           echo "APP_DIR=$APP_DIR" >> "$GITHUB_ENV"
