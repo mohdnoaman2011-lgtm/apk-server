@@ -3,9 +3,12 @@ import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:network_info_plus/network_info_plus.dart';
 
+import '../core/i18n.dart';
 import '../models/apk_app.dart';
+import '../models/app_prefs.dart';
 import '../models/tunnel_config.dart';
 import '../services/apk_reader.dart';
 import '../services/background.dart';
@@ -31,21 +34,43 @@ class AppStore extends ChangeNotifier {
   // ── النفق (الوصول من الإنترنت) ──
   bool tunnelOn = false; // اختيار المستخدم (محفوظ)
   TunnelConfig tunnelConfig = TunnelConfig();
+  AppPrefs prefs = AppPrefs();
   bool tunnelBusy = false;
   String? publicUrl;
   String? tunnelError;
   int _tunnelGen = 0; // يُبطل نتائج المحاولات القديمة
   Timer? _retry;
 
+  ThemeMode get themeMode => switch (prefs.theme) {
+        'dark' => ThemeMode.dark,
+        'light' => ThemeMode.light,
+        _ => ThemeMode.system,
+      };
+  AppLang get lang => prefs.lang == 'en' ? AppLang.en : AppLang.ar;
+
+  void setThemeMode(ThemeMode m) {
+    prefs.theme = m.name;
+    _persist();
+    notifyListeners();
+  }
+
+  void setLang(AppLang l) {
+    prefs.lang = l.name;
+    currentLang = l;
+    _persist();
+    unawaited(Background.update(_statusText));
+    notifyListeners();
+  }
+
   bool get running => _server.running;
   String link(ApkApp a) => 'http://$ip:$port/${a.token}';
   String? publicLink(ApkApp a) => publicUrl == null ? null : '$publicUrl/${a.token}';
 
   String get _statusText => !online
-      ? 'لا يوجد اتصال – بانتظار الشبكة'
+      ? tr0('لا يوجد اتصال – بانتظار الشبكة')
       : publicUrl != null
-          ? 'عام: $publicUrl'
-          : 'الرابط: $ip:$port';
+          ? '${tr0('عام')}: $publicUrl'
+          : '${tr0('الرابط')}: $ip:$port';
 
   Future<void> init() async {
     await _storage.init();
@@ -54,6 +79,8 @@ class AppStore extends ChangeNotifier {
     serverOn = data.serverOn;
     tunnelOn = data.tunnelOn;
     tunnelConfig = data.tunnelConfig;
+    prefs = data.prefs;
+    currentLang = lang;
     _server = WebServer(
       getApps: () => apps,
       onDownload: (a) {
@@ -105,7 +132,7 @@ class AppStore extends ChangeNotifier {
       await _server.start(port);
       await Background.start(_statusText);
     } catch (e) {
-      error = 'تعذّر تشغيل السيرفر: $e';
+      error = '${tr0('تعذّر تشغيل السيرفر')}: $e';
     }
     notifyListeners();
   }
@@ -168,7 +195,7 @@ class AppStore extends ChangeNotifier {
     } catch (e) {
       await _tunnel.stop();
       if (gen == _tunnelGen) {
-        tunnelError = 'تعذّر فتح النفق: $e';
+        tunnelError = '${tr0('تعذّر فتح النفق')}: $e';
         _scheduleRetry();
       }
     } finally {
@@ -215,7 +242,7 @@ class AppStore extends ChangeNotifier {
     final existing = apps.where((a) => a.id == info.package).firstOrNull;
     if (existing != null && existing.versions.any((v) => v.versionCode == info.versionCode)) {
       await File(tmpIcon).delete();
-      throw 'هذا الإصدار (${info.versionName}) مرفوع مسبقاً';
+      throw '${tr0('هذا الإصدار')} (${info.versionName}) ${tr0('مرفوع مسبقاً')}';
     }
 
     final apkPath = '${_storage.apkDir.path}/${info.package}-${info.versionCode}.apk';
@@ -272,7 +299,7 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _persist() => unawaited(_storage.save(apps, serverOn, tunnelOn, tunnelConfig));
+  void _persist() => unawaited(_storage.save(apps, serverOn, tunnelOn, tunnelConfig, prefs));
 
   @override
   void dispose() {
