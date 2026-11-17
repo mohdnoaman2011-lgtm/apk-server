@@ -25,6 +25,7 @@ class AppStore extends ChangeNotifier {
   bool online = true;
   bool serverOn = true; // اختيار المستخدم (محفوظ)
   String? error;
+  bool picking = false; // أثناء اختيار/نسخ ملف الـ APK
   StreamSubscription<List<ConnectivityResult>>? _conn;
 
   // ── النفق (الوصول من الإنترنت) ──
@@ -37,8 +38,8 @@ class AppStore extends ChangeNotifier {
   Timer? _retry;
 
   bool get running => _server.running;
-  String link(ApkApp a) => 'http://$ip:$port/a/${a.token}';
-  String? publicLink(ApkApp a) => publicUrl == null ? null : '$publicUrl/a/${a.token}';
+  String link(ApkApp a) => 'http://$ip:$port/${a.token}';
+  String? publicLink(ApkApp a) => publicUrl == null ? null : '$publicUrl/${a.token}';
 
   String get _statusText => !online
       ? 'لا يوجد اتصال – بانتظار الشبكة'
@@ -196,6 +197,12 @@ class AppStore extends ChangeNotifier {
     publicUrl = null;
     tunnelError = null;
     await _tunnel.stop();
+  }
+
+  void setPicking(bool v) {
+    if (picking == v) return;
+    picking = v;
+    notifyListeners();
   }
 
   // ───────── التطبيقات ─────────
