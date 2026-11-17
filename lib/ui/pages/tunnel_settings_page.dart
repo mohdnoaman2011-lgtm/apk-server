@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../i18n.dart';
 
 import '../../models/tunnel_config.dart';
 import '../../state/app_store.dart';
@@ -32,7 +34,7 @@ class _TunnelSettingsPageState extends State<TunnelSettingsPage> {
           controller: ctl,
           obscureText: secret,
           keyboardType: number ? TextInputType.number : TextInputType.url,
-          decoration: InputDecoration(labelText: label, hintText: hint, border: const OutlineInputBorder()),
+          decoration: InputDecoration(labelText: tr(context, label), hintText: hint, border: const OutlineInputBorder()),
         ),
       ),
     );
@@ -40,7 +42,7 @@ class _TunnelSettingsPageState extends State<TunnelSettingsPage> {
 
   Widget _help(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 16),
-        child: Text(text, style: const TextStyle(color: kMuted, height: 1.8)),
+        child: Text(text, style: TextStyle(color: context.cs.onSurfaceVariant, height: 1.8)),
       );
 
   void _save() {

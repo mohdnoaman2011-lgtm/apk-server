@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../i18n.dart';
 
 import '../../core/format.dart';
 import '../../models/apk_app.dart';
@@ -24,12 +26,12 @@ class DashboardPage extends StatelessWidget {
       if (store.publicUrl != null)
         Padding(
           padding: const EdgeInsets.only(top: 6),
-          child: LtrText(store.publicUrl!, style: const TextStyle(color: kGreen, fontSize: 13)),
+          child: LtrText(store.publicUrl!, style: TextStyle(color: context.cs.primary, fontSize: 13)),
         ),
       if (store.error != null)
         Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: Text(store.error!, style: const TextStyle(color: Colors.redAccent)),
+          child: Text(store.error!, style: TextStyle(color: context.cs.error)),
         ),
       const SizedBox(height: 20),
       IntrinsicHeight(
@@ -45,9 +47,11 @@ class DashboardPage extends StatelessWidget {
       const Text('تطبيقاتي', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
       const SizedBox(height: 12),
       if (store.apps.isEmpty)
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 48),
-          child: Center(child: Text('لم ترفع أي تطبيق بعد', style: TextStyle(color: kMuted))),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 48),
+          child: Center(
+            child: Text('لم ترفع أي تطبيق بعد', style: TextStyle(color: context.cs.onSurfaceVariant)),
+          ),
         ),
       for (final a in store.apps) _AppTile(app: a),
     ]);
@@ -75,7 +79,7 @@ class _Stat extends StatelessWidget {
                   child: Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(height: 2),
-                Text(label, style: const TextStyle(color: kMuted)),
+                Text(label, style: TextStyle(color: context.cs.onSurfaceVariant)),
               ],
             ),
           ),
@@ -109,14 +113,15 @@ class _AppTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   Wrap(spacing: 8, children: [
                     Text(ltr('v${app.current.versionName} · ${fmtSize(app.current.size)}'),
-                        style: const TextStyle(color: kMuted, fontSize: 13)),
-                    Text('${app.downloads} تحميل', style: const TextStyle(color: kMuted, fontSize: 13)),
+                        style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13)),
+                    Text('${app.downloads} ${tr(context, 'تحميل')}',
+                        style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13)),
                   ]),
                 ]),
               ),
               IconButton(
-                tooltip: 'نسخ الرابط',
-                icon: const Icon(Icons.copy_rounded, color: kGreen),
+                tooltip: tr(context, 'نسخ الرابط'),
+                icon: Icon(Icons.copy_rounded, color: context.cs.primary),
                 onPressed: () => copyLink(context, store.link(app)),
               ),
             ]),

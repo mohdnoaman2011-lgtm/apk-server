@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../i18n.dart';
 
 import '../../state/app_store.dart';
 import '../upload.dart';
@@ -36,10 +38,10 @@ class _ShellState extends State<Shell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: tab,
         onDestinationSelected: (i) => setState(() => tab = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_rounded), label: 'الرئيسية'),
-          NavigationDestination(icon: Icon(Icons.history_rounded), label: 'السجل'),
-          NavigationDestination(icon: Icon(Icons.settings_rounded), label: 'الإعدادات'),
+        destinations: [
+          NavigationDestination(icon: Icon(Icons.home_rounded), label: tr(context, 'الرئيسية')),
+          NavigationDestination(icon: Icon(Icons.history_rounded), label: tr(context, 'السجل')),
+          NavigationDestination(icon: Icon(Icons.settings_rounded), label: tr(context, 'الإعدادات')),
         ],
       ),
     );

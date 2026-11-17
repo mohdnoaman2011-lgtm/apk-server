@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../i18n.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/format.dart';
@@ -28,9 +30,9 @@ class DetailPage extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(app.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                  LtrText(app.id, style: const TextStyle(color: kMuted, fontSize: 13)),
-                  Text('الإصدار ${ltr(app.current.versionName)} · ${ltr(fmtSize(app.current.size))}',
-                      style: const TextStyle(color: kMuted)),
+                  LtrText(app.id, style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13)),
+                  Text('${tr(context, 'الإصدار')} ${ltr(app.current.versionName)} · ${ltr(fmtSize(app.current.size))}',
+                      style: TextStyle(color: context.cs.onSurfaceVariant)),
                 ]),
               ),
             ]),
@@ -39,19 +41,18 @@ class DetailPage extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('رابط التحميل (مختصر)', style: TextStyle(color: kMuted)),
+                  Text('رابط التحميل (مختصر)', style: TextStyle(color: context.cs.onSurfaceVariant)),
                   const SizedBox(height: 8),
                   Row(children: [
                     Expanded(
                       child: Directionality(
                         textDirection: TextDirection.ltr,
                         child: Text('…/${app.token}',
-                            style: const TextStyle(
-                                color: Color(0xFF7CC4FF), fontSize: 20, fontWeight: FontWeight.w600)),
+                            style: TextStyle(color: context.cs.tertiary, fontSize: 20, fontWeight: FontWeight.w600)),
                       ),
                     ),
                     IconButton.filled(
-                      tooltip: 'نسخ',
+                      tooltip: tr(context, 'نسخ'),
                       icon: const Icon(Icons.copy_rounded),
                       onPressed: () => copyLink(context, link),
                     ),
@@ -64,17 +65,17 @@ class DetailPage extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(14),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('الرابط العام (من أي مكان)', style: TextStyle(color: kMuted)),
+                    Text('الرابط العام (من أي مكان)', style: TextStyle(color: context.cs.onSurfaceVariant)),
                     const SizedBox(height: 8),
                     Row(children: [
                       Expanded(
                         child: Directionality(
                           textDirection: TextDirection.ltr,
-                          child: SelectableText(pub, style: const TextStyle(color: kGreen)),
+                          child: SelectableText(pub, style: TextStyle(color: context.cs.primary)),
                         ),
                       ),
                       IconButton.filled(
-                        tooltip: 'نسخ',
+                        tooltip: tr(context, 'نسخ'),
                         icon: const Icon(Icons.copy_rounded),
                         onPressed: () => copyLink(context, pub),
                       ),
@@ -92,9 +93,9 @@ class DetailPage extends StatelessWidget {
                     child: QrImageView(data: pub ?? link, size: 140, backgroundColor: Colors.white),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Text('رمز QR تلقائي يفتح صفحة التحميل عند المسح (يستخدم الرابط العام إن كان النفق شغّالاً).',
-                        style: TextStyle(color: Colors.white70)),
+                        style: TextStyle(color: context.cs.onSurfaceVariant)),
                   ),
                 ]),
               ),
@@ -109,7 +110,7 @@ class DetailPage extends StatelessWidget {
             const SizedBox(height: 8),
             OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.redAccent,
+                foregroundColor: context.cs.error,
                 minimumSize: const Size(0, 52),
               ),
               icon: const Icon(Icons.delete_outline),

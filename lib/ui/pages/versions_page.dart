@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import '../i18n.dart';
 
 import '../../core/format.dart';
 import '../../state/app_store.dart';
@@ -14,9 +16,11 @@ class VersionsPage extends StatelessWidget {
       const Text('سجل الإصدارات', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
       const SizedBox(height: 12),
       if (store.apps.isEmpty)
-        const Padding(
-          padding: EdgeInsets.all(32),
-          child: Center(child: Text('لا توجد إصدارات بعد', style: TextStyle(color: kMuted))),
+        Padding(
+          padding: const EdgeInsets.all(32),
+          child: Center(
+            child: Text('لا توجد إصدارات بعد', style: TextStyle(color: context.cs.onSurfaceVariant)),
+          ),
         ),
       for (final a in store.apps) ...[
         Row(children: [
@@ -29,7 +33,7 @@ class VersionsPage extends StatelessWidget {
           Card(
             child: ListTile(
               title: Align(
-                alignment: Alignment.centerRight,
+                alignment: AlignmentDirectional.centerStart,
                 child: LtrText('v${a.versions[i].versionName}'),
               ),
               subtitle: Text(
@@ -40,8 +44,8 @@ class VersionsPage extends StatelessWidget {
               trailing: i == 0
                   ? const Chip(label: Text('الحالية'))
                   : IconButton(
-                      tooltip: 'حذف هذا الإصدار',
-                      icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                      tooltip: tr(context, 'حذف هذا الإصدار'),
+                      icon: Icon(Icons.delete_outline, color: context.cs.error),
                       onPressed: () => store.removeVersion(a, a.versions[i]),
                     ),
             ),
