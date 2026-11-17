@@ -1,5 +1,7 @@
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import 'i18n.dart';
 
 import '../state/app_store.dart';
 
@@ -19,7 +21,7 @@ Future<void> uploadApk(BuildContext context) async {
     context: context,
     builder: (c) => AlertDialog(
       title: const Text('ما الجديد في هذا الإصدار؟'),
-      content: TextField(controller: notes, decoration: const InputDecoration(hintText: 'اختياري')),
+      content: TextField(controller: notes, decoration: InputDecoration(hintText: tr(c, 'اختياري'))),
       actions: [
         TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('إلغاء')),
         FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('رفع')),
@@ -37,9 +39,9 @@ Future<void> uploadApk(BuildContext context) async {
   String msg;
   try {
     final a = await store.addApk(path, notes: notes.text.trim());
-    msg = 'تم رفع ${a.name} (v${a.current.versionName})';
+    msg = '${tr0('تم رفع')} ${a.name} (v${a.current.versionName})';
   } catch (e) {
-    msg = 'تعذّر الرفع: $e';
+    msg = '${tr0('تعذّر الرفع')}: $e';
   }
   if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
   messenger.showSnackBar(SnackBar(content: Text(msg)));

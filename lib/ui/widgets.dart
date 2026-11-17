@@ -1,6 +1,8 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+
+import 'i18n.dart';
 import 'package:flutter/services.dart';
 
 import '../models/apk_app.dart';
@@ -63,10 +65,10 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, label) = !store.running
-        ? (Colors.redAccent, 'متوقف')
+        ? (context.cs.error, 'متوقف')
         : !store.online
-            ? (Colors.orangeAccent, 'لا يوجد اتصال')
-            : (kGreen, 'السيرفر يعمل');
+            ? (context.cs.secondary, 'لا يوجد اتصال')
+            : (context.cs.primary, 'السيرفر يعمل');
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
