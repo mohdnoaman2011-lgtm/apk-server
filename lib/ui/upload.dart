@@ -4,7 +4,13 @@ import 'package:flutter/material.dart';
 import '../state/app_store.dart';
 
 Future<void> uploadApk(BuildContext context) async {
-  final r = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['apk']);
+  store.setPicking(true);
+  FilePickerResult? r;
+  try {
+    r = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['apk']);
+  } finally {
+    store.setPicking(false);
+  }
   final path = r?.files.single.path;
   if (path == null || !context.mounted) return;
 

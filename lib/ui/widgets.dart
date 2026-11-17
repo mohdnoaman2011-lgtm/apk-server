@@ -8,6 +8,7 @@ import '../state/app_store.dart';
 import 'theme.dart';
 
 /// أيقونة التطبيق الحقيقية المستخرجة من ملف الـ APK.
+/// بدون existsSync داخل build (كانت تسبب بطئاً عند كل إعادة رسم).
 class AppIcon extends StatelessWidget {
   const AppIcon(this.app, {super.key, this.size = 44});
   final ApkApp app;
@@ -16,20 +17,25 @@ class AppIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = BorderRadius.circular(size * .28);
-    final f = File(app.current.iconPath);
-    if (f.existsSync()) {
-      return ClipRRect(
-        borderRadius: r,
-        child: Image.file(f, width: size, height: size, fit: BoxFit.cover),
-      );
-    }
-    return Container(
+    final fallback = Container(
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration: BoxDecoration(color: kGreen, borderRadius: r),
+      color: kGreen,
       child: Text(app.name.characters.first,
           style: TextStyle(color: kBg, fontWeight: FontWeight.w700, fontSize: size * .45)),
+    );
+    return ClipRRect(
+      borderRadius: r,
+      child: Image.file(
+        File(app.current.iconPath),
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        cacheWidth: (size * 3).round(),
+        gaplessPlayback: true,
+        errorBuilder: (_, __, ___) => fallback,
+      ),
     );
   }
 }
@@ -61,6 +67,18 @@ class StatusChip extends StatelessWidget {
         : !store.online
             ? (Colors.orangeAccent, 'لا يوجد اتصال')
             : (kGreen, 'السيرفر يعمل');
-    return Chip(avatar: Icon(Icons.circle, size: 10, color: color), label: Text(label));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: .14),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: .45)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.circle, size: 9, color: color),
+        const SizedBox(width: 8),
+        Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
+      ]),
+    );
   }
 }
