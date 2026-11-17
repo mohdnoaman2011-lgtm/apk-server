@@ -31,7 +31,6 @@ class Background {
     } else {
       await FlutterForegroundTask.startService(
         serviceId: 256,
-        serviceTypes: [ForegroundServiceTypes.specialUse],
         notificationTitle: 'سيرفري يعمل',
         notificationText: text,
       );
