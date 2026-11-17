@@ -4,7 +4,7 @@ import 'dart:math';
 String newToken() {
   const chars = 'abcdefghijkmnpqrstuvwxyz23456789';
   final r = Random.secure();
-  return List.generate(10, (_) => chars[r.nextInt(chars.length)]).join();
+  return List.generate(6, (_) => chars[r.nextInt(chars.length)]).join();
 }
 
 class ApkVersion {
