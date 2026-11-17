@@ -1,5 +1,7 @@
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
+import '../core/i18n.dart';
+
 /// خدمة أمامية (Foreground Service) تُبقي العملية حيّة والسيرفر شغّالاً
 /// حتى بعد إغلاق الشاشة أو الانتقال لتطبيق آخر.
 class Background {
@@ -7,8 +9,8 @@ class Background {
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: 'apk_server',
-        channelName: 'سيرفر التطبيقات',
-        channelDescription: 'يُبقي السيرفر الشخصي شغّالاً',
+        channelName: tr0('سيرفر التطبيقات'),
+        channelDescription: tr0('يُبقي السيرفر الشخصي شغّالاً'),
         channelImportance: NotificationChannelImportance.LOW,
         priority: NotificationPriority.LOW,
       ),
@@ -31,7 +33,7 @@ class Background {
     } else {
       await FlutterForegroundTask.startService(
         serviceId: 256,
-        notificationTitle: 'سيرفري يعمل',
+        notificationTitle: tr0('سيرفري يعمل'),
         notificationText: text,
       );
     }
@@ -40,7 +42,7 @@ class Background {
   static Future<void> update(String text) async {
     if (await FlutterForegroundTask.isRunningService) {
       await FlutterForegroundTask.updateService(
-        notificationTitle: 'سيرفري يعمل',
+        notificationTitle: tr0('سيرفري يعمل'),
         notificationText: text,
       );
     }

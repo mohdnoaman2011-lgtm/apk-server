@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
 
+import '../core/i18n.dart';
+
 class ApkInfo {
   ApkInfo(this.name, this.package, this.versionName, this.versionCode);
   final String name;
@@ -18,7 +20,7 @@ class ApkReader {
       'read',
       {'path': apkPath, 'iconOut': iconOut},
     );
-    if (m == null) throw 'تعذّرت قراءة الملف';
+    if (m == null) throw tr0('تعذّرت قراءة الملف');
     return ApkInfo(
       m['name'] as String,
       m['package'] as String,

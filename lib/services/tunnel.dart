@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:dartssh2/dartssh2.dart';
 
+import '../core/i18n.dart';
 import '../models/tunnel_config.dart';
 import 'tunnel_key.dart';
 
@@ -57,7 +58,7 @@ class TunnelService {
       TunnelProvider.custom => c.remotePort,
     };
     final forward = await client.forwardRemote(host: bindHost, port: bindPort);
-    if (forward == null) throw 'رفض الخادم فتح النفق';
+    if (forward == null) throw tr0('رفض الخادم فتح النفق');
     forward.connections.listen(_bridge);
 
     final String url;
@@ -92,7 +93,7 @@ class TunnelService {
     });
     return found.future.timeout(
       const Duration(seconds: 25),
-      onTimeout: () => throw 'لم يصل رابط النفق من الخادم',
+      onTimeout: () => throw tr0('لم يصل رابط النفق من الخادم'),
     );
   }
 
@@ -108,7 +109,7 @@ class TunnelService {
     ]);
     if (early) {
       final msg = out.toString().trim();
-      throw msg.isEmpty ? 'أغلق الخادم الجلسة (تحقق من البيانات)' : msg;
+      throw msg.isEmpty ? tr0('أغلق الخادم الجلسة (تحقق من البيانات)') : msg;
     }
   }
 
