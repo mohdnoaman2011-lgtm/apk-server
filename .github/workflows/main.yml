@@ -82,7 +82,8 @@ jobs:
             lib/ui/upload.dart lib/ui/pages/shell.dart \
             lib/ui/pages/dashboard_page.dart lib/ui/pages/detail_page.dart \
             lib/ui/pages/versions_page.dart lib/ui/pages/settings_page.dart \
-            lib/ui/pages/tunnel_settings_page.dart; do
+            lib/ui/pages/tunnel_settings_page.dart lib/core/i18n.dart \
+            lib/models/app_prefs.dart lib/ui/i18n.dart; do
             if [ ! -f "$f" ]; then echo "::error::missing file: $f"; missing=1; fi
           done
           exit $missing
