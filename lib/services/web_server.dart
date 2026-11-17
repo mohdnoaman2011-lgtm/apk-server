@@ -8,7 +8,7 @@ import '../core/format.dart';
 import '../models/apk_app.dart';
 
 /// السيرفر الشخصي:
-///   GET /a/<token>             صفحة التحميل للزائر
+///   GET /<token>               صفحة التحميل للزائر
 ///   GET /a/<id>/icon.png       أيقونة التطبيق
 ///   GET /a/<id>/download       ملف APK (?v=<index> لإصدار سابق)
 class WebServer {
@@ -32,15 +32,16 @@ class WebServer {
   }
 
   Future<Response> _handle(Request req) async {
-    final s = req.url.pathSegments;
-    if (s.length < 2 || s[0] != 'a') return Response.notFound('Not found');
-    final app = getApps().where((a) => a.token == s[1] && a.enabled).firstOrNull;
+    var s = req.url.pathSegments.where((x) => x.isNotEmpty).toList();
+    if (s.isNotEmpty && s[0] == 'a') s = s.sublist(1); // دعم الروابط القديمة /a/<token>
+    if (s.isEmpty) return Response.notFound('Not found');
+    final app = getApps().where((a) => a.token == s[0] && a.enabled).firstOrNull;
     if (app == null) return Response.notFound('الرابط غير متاح');
 
-    if (s.length == 2) {
+    if (s.length == 1) {
       return Response.ok(_page(app), headers: {'content-type': 'text/html; charset=utf-8'});
     }
-    if (s[2] == 'icon.png') {
+    if (s[1] == 'icon.png') {
       final f = File(app.current.iconPath);
       if (!f.existsSync()) return Response.notFound('');
       return Response.ok(f.openRead(), headers: {
@@ -48,7 +49,7 @@ class WebServer {
         'cache-control': 'public, max-age=300',
       });
     }
-    if (s[2] == 'download') {
+    if (s[1] == 'download') {
       final i = int.tryParse(req.url.queryParameters['v'] ?? '0') ?? 0;
       final v = app.versions[i.clamp(0, app.versions.length - 1)];
       final f = File(v.apkPath);
@@ -68,7 +69,7 @@ class WebServer {
     final v = a.current;
     final old = [
       for (var i = 1; i < a.versions.length; i++)
-        '<li><a href="/a/${a.token}/download?v=$i">v${e.convert(a.versions[i].versionName)}</a>'
+        '<li><a href="/${a.token}/download?v=$i">v${e.convert(a.versions[i].versionName)}</a>'
             ' · ${fmtSize(a.versions[i].size)} · ${fmtDate(a.versions[i].date)}</li>'
     ].join();
     final notes = v.notes.isEmpty
@@ -85,11 +86,11 @@ main{max-width:640px;margin:0 auto;padding:40px 20px;display:flex;flex-direction
 .card{background:#171E27;border:1px solid #232C37;border-radius:16px;padding:16px;line-height:1.8}
 .muted{color:#9AA7B5;font-size:14px;direction:ltr;text-align:right;margin:0}
 a{color:#7CC4FF}</style></head><body><main>
-<img class="ic" src="/a/${a.token}/icon.png" alt="">
+<img class="ic" src="/${a.token}/icon.png" alt="">
 <div><h1 style="margin:0 0 4px">${e.convert(a.name)}</h1><p class="muted">${e.convert(a.id)}</p></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip">الإصدار ${e.convert(v.versionName)}</span>
 <span class="chip">${fmtSize(v.size)}</span><span class="chip">${fmtDate(v.date)}</span></div>
-<a class="btn" href="/a/${a.token}/download">تحميل APK</a>
+<a class="btn" href="/${a.token}/download">تحميل APK</a>
 $notes$olds
 <div class="card" style="color:#FFD38A;font-size:14px">للتثبيت، اسمح بالتثبيت من هذا المصدر عند ظهور التنبيه في الجهاز.</div>
 </main></body></html>''';
