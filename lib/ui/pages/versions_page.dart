@@ -33,7 +33,7 @@ class VersionsPage extends StatelessWidget {
                 child: LtrText('v${a.versions[i].versionName}'),
               ),
               subtitle: Text(
-                '${fmtDate(a.versions[i].date)} · ${fmtSize(a.versions[i].size)}'
+                '${ltr(fmtDate(a.versions[i].date))} · ${ltr(fmtSize(a.versions[i].size))}'
                 '${a.versions[i].notes.isEmpty ? '' : '\n${a.versions[i].notes}'}',
               ),
               isThreeLine: a.versions[i].notes.isNotEmpty,

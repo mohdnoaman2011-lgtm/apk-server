@@ -20,7 +20,13 @@ class _ShellState extends State<Shell> {
     const pages = [DashboardPage(), VersionsPage(), SettingsPage()];
     return Scaffold(
       body: SafeArea(
-        child: ListenableBuilder(listenable: store, builder: (_, __) => pages[tab]),
+        child: ListenableBuilder(
+          listenable: store,
+          builder: (_, __) => Column(children: [
+            if (store.picking) const LinearProgressIndicator(minHeight: 3),
+            Expanded(child: pages[tab]),
+          ]),
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => uploadApk(context),

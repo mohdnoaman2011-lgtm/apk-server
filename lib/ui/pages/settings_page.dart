@@ -26,7 +26,7 @@ class SettingsPage extends StatelessWidget {
       Card(
         child: SwitchListTile(
           title: const Text('تشغيل السيرفر'),
-          subtitle: LtrText('${store.ip}:${AppStore.port}'),
+          subtitle: Text(store.running ? 'يعمل الآن' : 'متوقف'),
           value: store.serverOn,
           onChanged: store.setServer,
         ),

@@ -29,7 +29,7 @@ class DetailPage extends StatelessWidget {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(app.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                   LtrText(app.id, style: const TextStyle(color: kMuted, fontSize: 13)),
-                  Text('الإصدار ${app.current.versionName} · ${fmtSize(app.current.size)}',
+                  Text('الإصدار ${ltr(app.current.versionName)} · ${ltr(fmtSize(app.current.size))}',
                       style: const TextStyle(color: kMuted)),
                 ]),
               ),
@@ -39,13 +39,15 @@ class DetailPage extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('رابط التحميل المباشر', style: TextStyle(color: kMuted)),
+                  const Text('رابط التحميل (مختصر)', style: TextStyle(color: kMuted)),
                   const SizedBox(height: 8),
                   Row(children: [
                     Expanded(
                       child: Directionality(
                         textDirection: TextDirection.ltr,
-                        child: SelectableText(link, style: const TextStyle(color: Color(0xFF7CC4FF))),
+                        child: Text('…/${app.token}',
+                            style: const TextStyle(
+                                color: Color(0xFF7CC4FF), fontSize: 20, fontWeight: FontWeight.w600)),
                       ),
                     ),
                     IconButton.filled(
