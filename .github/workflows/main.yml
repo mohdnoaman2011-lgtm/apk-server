@@ -87,6 +87,11 @@ jobs:
           done
           exit $missing
 
+      # flutter_foreground_task 8.17 لا يدعم الوسيط serviceTypes (النوع يُقرأ من المانيفست)
+      - name: Compatibility patch
+        working-directory: ${{ env.APP_DIR }}
+        run: sed -i '/serviceTypes:/d' lib/services/background.dart
+
       # مفتاح النفق المجهول يُولَّد وقت البناء، فلا حاجة لرفعه إلى المستودع
       - name: Generate tunnel key
         working-directory: ${{ env.APP_DIR }}
