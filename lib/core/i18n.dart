@@ -21,7 +21,7 @@ const _en = <String, String>{
   'تم نسخ الرابط': 'Link copied',
   'تفاصيل التطبيق': 'App details',
   'الإصدار': 'Version',
-  'رابط التحميل (مختصر)': 'Download link (short)',
+  'رابط التحميل': 'Download link',
   'نسخ': 'Copy',
   'الرابط العام (من أي مكان)': 'Public link (from anywhere)',
   'رمز QR تلقائي يفتح صفحة التحميل عند المسح (يستخدم الرابط العام إن كان النفق شغّالاً).': 'Auto-generated QR code that opens the download page when scanned (uses the public link when the tunnel is on).',
