@@ -1,45 +1,44 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show ThemeMode;
-import 'package:network_info_plus/network_info_plus.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 import '../core/i18n.dart';
+import '../core/net.dart';
 import '../models/apk_app.dart';
 import '../models/app_prefs.dart';
 import '../models/tunnel_config.dart';
 import '../services/apk_reader.dart';
 import '../services/background.dart';
 import '../services/storage.dart';
-import '../services/tunnel.dart';
-import '../services/web_server.dart';
 
+/// حالة الواجهة. السيرفر والنفق يعملان في خدمة الخلفية؛ هذا الكلاس يكتب
+/// البيانات في الملفات ويرسل أمر reload ثم يستقبل الحالة من الخدمة.
 class AppStore extends ChangeNotifier {
-  static const port = 8080;
+  static const port = kPort;
 
   final _storage = Storage();
-  late final WebServer _server;
-  late final TunnelService _tunnel = TunnelService(port);
   final apps = <ApkApp>[];
 
-  String ip = '127.0.0.1';
-  bool online = true;
-  bool serverOn = true; // اختيار المستخدم (محفوظ)
-  String? error;
-  bool picking = false; // أثناء اختيار/نسخ ملف الـ APK
-  StreamSubscription<List<ConnectivityResult>>? _conn;
-
-  // ── النفق (الوصول من الإنترنت) ──
-  bool tunnelOn = false; // اختيار المستخدم (محفوظ)
+  // ── محفوظ ──
+  bool serverOn = true;
+  bool tunnelOn = false;
   TunnelConfig tunnelConfig = TunnelConfig();
   AppPrefs prefs = AppPrefs();
+
+  // ── حالة قادمة من الخدمة ──
+  String ip = '127.0.0.1';
+  bool online = true;
+  bool running = false;
+  String? error;
   bool tunnelBusy = false;
   String? publicUrl;
   String? tunnelError;
-  int _tunnelGen = 0; // يُبطل نتائج المحاولات القديمة
-  Timer? _retry;
+
+  bool picking = false; // أثناء اختيار/نسخ ملف الـ APK
+  Future<void> _saving = Future.value();
 
   ThemeMode get themeMode => switch (prefs.theme) {
         'dark' => ThemeMode.dark,
@@ -48,29 +47,8 @@ class AppStore extends ChangeNotifier {
       };
   AppLang get lang => prefs.lang == 'en' ? AppLang.en : AppLang.ar;
 
-  void setThemeMode(ThemeMode m) {
-    prefs.theme = m.name;
-    _persist();
-    notifyListeners();
-  }
-
-  void setLang(AppLang l) {
-    prefs.lang = l.name;
-    currentLang = l;
-    _persist();
-    unawaited(Background.update(_statusText));
-    notifyListeners();
-  }
-
-  bool get running => _server.running;
   String link(ApkApp a) => 'http://$ip:$port/${a.token}';
   String? publicLink(ApkApp a) => publicUrl == null ? null : '$publicUrl/${a.token}';
-
-  String get _statusText => !online
-      ? tr0('لا يوجد اتصال – بانتظار الشبكة')
-      : publicUrl != null
-          ? '${tr0('عام')}: $publicUrl'
-          : '${tr0('الرابط')}: $ip:$port';
 
   Future<void> init() async {
     await _storage.init();
@@ -81,149 +59,101 @@ class AppStore extends ChangeNotifier {
     tunnelConfig = data.tunnelConfig;
     prefs = data.prefs;
     currentLang = lang;
-    _server = WebServer(
-      getApps: () => apps,
-      onDownload: (a) {
-        a.downloads++;
-        _persist();
-        notifyListeners();
-      },
-    );
+    _applyDownloads(await _storage.loadDownloads());
+    ip = (await readNet(ip)).ip;
+
     Background.init();
-    await _refreshNetwork();
-    _conn = Connectivity().onConnectivityChanged.listen(_onConnectivity);
-    if (serverOn) {
-      await _startAll();
-      unawaited(_openTunnel());
+    FlutterForegroundTask.addTaskDataCallback(_onTaskData);
+    if (serverOn) await _ensureService();
+  }
+
+  // ───────── الخدمة ─────────
+
+  /// إن كانت الخدمة شغّالة (مثلاً بقيت بعد إغلاق الواجهة) نطلب منها الحالة، وإلا نشغّلها.
+  Future<void> _ensureService() async {
+    if (await FlutterForegroundTask.isRunningService) {
+      FlutterForegroundTask.sendDataToTask({'cmd': 'status'});
+    } else {
+      await Background.start();
     }
   }
 
-  // ───────── الشبكة والسيرفر ─────────
-
-  Future<void> _refreshNetwork() async {
-    final r = await Connectivity().checkConnectivity();
-    online = r.any((x) => x != ConnectivityResult.none);
-    ip = await NetworkInfo().getWifiIP() ?? ip;
-  }
-
-  /// السيرفر يستمر ما دام الجهاز متصلاً: عند عودة الاتصال أو تغيّر الشبكة
-  /// نُعيد ربط السيرفر بالعنوان الجديد ونعيد فتح النفق.
-  Future<void> _onConnectivity(List<ConnectivityResult> r) async {
-    final wasOnline = online;
-    final oldIp = ip;
-    await _refreshNetwork();
-    if (serverOn && (wasOnline != online || oldIp != ip)) {
-      if (online) {
-        await _server.stop();
-        await _startAll();
-        await _closeTunnel();
-        unawaited(_openTunnel());
-      } else {
-        await _closeTunnel();
-        await Background.update(_statusText);
-      }
-    }
-    notifyListeners();
-  }
-
-  Future<void> _startAll() async {
-    try {
-      error = null;
-      await _server.start(port);
-      await Background.start(_statusText);
-    } catch (e) {
-      error = '${tr0('تعذّر تشغيل السيرفر')}: $e';
+  void _onTaskData(Object d) {
+    if (d is! Map) return;
+    switch (d['t']) {
+      case 'status':
+        running = d['running'] == true;
+        online = d['online'] == true;
+        ip = (d['ip'] as String?) ?? ip;
+        publicUrl = d['publicUrl'] as String?;
+        tunnelBusy = d['tunnelBusy'] == true;
+        tunnelError = d['tunnelError'] as String?;
+        error = d['serverError'] as String?;
+      case 'downloads':
+        _applyDownloads((d['map'] as Map).map((k, v) => MapEntry(k as String, (v as num).toInt())));
+      case 'stopped':
+        serverOn = false;
+        running = false;
+        publicUrl = null;
     }
     notifyListeners();
   }
+
+  void _applyDownloads(Map<String, int> m) {
+    for (final a in apps) {
+      a.downloads = m[a.token] ?? a.downloads;
+    }
+  }
+
+  /// يحفظ البيانات ثم يطلب من الخدمة إعادة قراءتها (بالترتيب حتى لا تقرأ ملفاً قديماً).
+  void _commit() {
+    _saving = _saving.then((_) async {
+      await _storage.save(apps, serverOn, tunnelOn, tunnelConfig, prefs);
+      FlutterForegroundTask.sendDataToTask({'cmd': 'reload'});
+    });
+  }
+
+  // ───────── الإعدادات ─────────
 
   Future<void> setServer(bool on) async {
     serverOn = on;
+    notifyListeners();
+    _commit();
+    await _saving;
     if (on) {
-      await _startAll();
-      unawaited(_openTunnel());
+      await _ensureService();
     } else {
-      await _closeTunnel();
-      await _server.stop();
-      await Background.stop();
-    }
-    _persist();
-    notifyListeners();
-  }
-
-  // ───────── النفق ─────────
-
-  Future<void> setTunnel(bool on) async {
-    tunnelOn = on;
-    _persist();
-    if (on) {
-      await _openTunnel();
-    } else {
-      await _closeTunnel();
-      await Background.update(_statusText);
-    }
-    notifyListeners();
-  }
-
-  /// حفظ إعدادات النفق وإعادة فتحه بها إن كان مفعّلاً.
-  Future<void> setTunnelConfig(TunnelConfig c) async {
-    tunnelConfig = c;
-    _persist();
-    if (tunnelOn) {
-      await _closeTunnel();
-      unawaited(_openTunnel());
-    }
-    notifyListeners();
-  }
-
-  Future<void> _openTunnel() async {
-    if (!tunnelOn || !serverOn || !online || tunnelBusy || publicUrl != null) return;
-    final gen = ++_tunnelGen;
-    tunnelBusy = true;
-    tunnelError = null;
-    notifyListeners();
-    try {
-      final r = await _tunnel.start(tunnelConfig);
-      if (gen != _tunnelGen) {
-        await _tunnel.stop(); // أُلغي الطلب أثناء الاتصال
-        _scheduleRetry();
-        return;
-      }
-      publicUrl = r.url;
-      unawaited(r.closed.whenComplete(() => _onTunnelClosed(gen)));
-      await Background.update(_statusText);
-    } catch (e) {
-      await _tunnel.stop();
-      if (gen == _tunnelGen) {
-        tunnelError = '${tr0('تعذّر فتح النفق')}: $e';
-        _scheduleRetry();
-      }
-    } finally {
+      running = false;
+      publicUrl = null;
       tunnelBusy = false;
+      await Background.stop();
       notifyListeners();
     }
   }
 
-  void _onTunnelClosed(int gen) {
-    if (gen != _tunnelGen) return; // أغلقناه نحن عمداً
-    publicUrl = null;
+  void setTunnel(bool on) {
+    tunnelOn = on;
     notifyListeners();
-    unawaited(Background.update(_statusText));
-    _scheduleRetry();
+    _commit();
   }
 
-  void _scheduleRetry() {
-    _retry?.cancel();
-    if (!tunnelOn || !serverOn || !online) return;
-    _retry = Timer(const Duration(seconds: 10), _openTunnel);
+  void setTunnelConfig(TunnelConfig c) {
+    tunnelConfig = c;
+    notifyListeners();
+    _commit();
   }
 
-  Future<void> _closeTunnel() async {
-    _tunnelGen++;
-    _retry?.cancel();
-    publicUrl = null;
-    tunnelError = null;
-    await _tunnel.stop();
+  void setThemeMode(ThemeMode m) {
+    prefs.theme = m.name;
+    notifyListeners();
+    _commit();
+  }
+
+  void setLang(AppLang l) {
+    prefs.lang = l.name;
+    currentLang = l;
+    notifyListeners();
+    _commit();
   }
 
   void setPicking(bool v) {
@@ -271,7 +201,7 @@ class AppStore extends ChangeNotifier {
       app = ApkApp(id: info.package, name: info.name, versions: [v]);
       apps.add(app);
     }
-    _persist();
+    _commit();
     notifyListeners();
     return app;
   }
@@ -281,7 +211,7 @@ class AppStore extends ChangeNotifier {
     for (final v in a.versions) {
       await _storage.deleteVersionFiles(v);
     }
-    _persist();
+    _commit();
     notifyListeners();
   }
 
@@ -289,22 +219,19 @@ class AppStore extends ChangeNotifier {
     if (a.versions.length == 1) return removeApp(a);
     a.versions.remove(v);
     await _storage.deleteVersionFiles(v);
-    _persist();
+    _commit();
     notifyListeners();
   }
 
   void setEnabled(ApkApp a, bool on) {
     a.enabled = on;
-    _persist();
+    _commit();
     notifyListeners();
   }
 
-  void _persist() => unawaited(_storage.save(apps, serverOn, tunnelOn, tunnelConfig, prefs));
-
   @override
   void dispose() {
-    _retry?.cancel();
-    _conn?.cancel();
+    FlutterForegroundTask.removeTaskDataCallback(_onTaskData);
     super.dispose();
   }
 }
