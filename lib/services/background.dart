@@ -1,9 +1,10 @@
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 import '../core/i18n.dart';
+import 'task_handler.dart';
 
-/// خدمة أمامية (Foreground Service) تُبقي العملية حيّة والسيرفر شغّالاً
-/// حتى بعد إغلاق الشاشة أو الانتقال لتطبيق آخر.
+/// تشغيل خدمة الخلفية (Foreground Service). السيرفر نفسه يعمل داخلها
+/// (انظر server_runtime.dart) فيستمر بعد إغلاق التطبيق.
 class Background {
   static void init() {
     FlutterForegroundTask.init(
@@ -16,36 +17,26 @@ class Background {
       ),
       iosNotificationOptions: const IOSNotificationOptions(),
       foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.nothing(),
+        eventAction: ForegroundTaskEventAction.repeat(15000), // فحص دوري كل 15 ثانية
         allowWakeLock: true,
         allowWifiLock: true,
       ),
     );
   }
 
-  static Future<void> start(String text) async {
+  static Future<void> start() async {
     await FlutterForegroundTask.requestNotificationPermission();
     if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
       await FlutterForegroundTask.requestIgnoreBatteryOptimization();
     }
-    if (await FlutterForegroundTask.isRunningService) {
-      await update(text);
-    } else {
-      await FlutterForegroundTask.startService(
-        serviceId: 256,
-        notificationTitle: tr0('سيرفري يعمل'),
-        notificationText: text,
-      );
-    }
-  }
-
-  static Future<void> update(String text) async {
-    if (await FlutterForegroundTask.isRunningService) {
-      await FlutterForegroundTask.updateService(
-        notificationTitle: tr0('سيرفري يعمل'),
-        notificationText: text,
-      );
-    }
+    if (await FlutterForegroundTask.isRunningService) return;
+    await FlutterForegroundTask.startService(
+      serviceId: 256,
+      notificationTitle: tr0('سيرفري يعمل'),
+      notificationText: tr0('جارٍ التشغيل…'),
+      notificationButtons: [NotificationButton(id: 'stop', text: tr0('إيقاف'))],
+      callback: startCallback,
+    );
   }
 
   static Future<void> stop() => FlutterForegroundTask.stopService();

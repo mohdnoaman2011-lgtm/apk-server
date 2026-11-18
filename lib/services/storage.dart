@@ -12,12 +12,14 @@ class Storage {
   late final Directory apkDir;
   late final Directory iconDir;
   late final File _db;
+  late final File _dl;
 
   Future<void> init() async {
     final root = await getApplicationDocumentsDirectory();
     apkDir = Directory('${root.path}/apks')..createSync(recursive: true);
     iconDir = Directory('${root.path}/icons')..createSync(recursive: true);
     _db = File('${root.path}/apps.json');
+    _dl = File('${root.path}/downloads.json');
   }
 
   Future<({List<ApkApp> apps, bool serverOn, bool tunnelOn, TunnelConfig tunnelConfig, AppPrefs prefs})> load() async {
@@ -41,7 +43,7 @@ class Storage {
   }
 
   Future<void> save(List<ApkApp> apps, bool serverOn, bool tunnelOn, TunnelConfig tunnelConfig, AppPrefs prefs) async {
-    final tmp = File('${_db.path}.tmp');
+    final tmp = File('${_db.path}.${DateTime.now().microsecondsSinceEpoch}.tmp');
     await tmp.writeAsString(jsonEncode({
       'serverOn': serverOn,
       'tunnelOn': tunnelOn,
@@ -50,6 +52,34 @@ class Storage {
       'apps': apps.map((a) => a.toJson()).toList(),
     }));
     await tmp.rename(_db.path); // كتابة آمنة حتى لا يتلف الملف عند الإغلاق المفاجئ
+  }
+
+  /// عدّاد التحميلات: تكتبه خدمة الخلفية فقط، والواجهة تقرأه (لا تعارض بين العمليتين).
+  Future<Map<String, int>> loadDownloads() async {
+    try {
+      if (!_dl.existsSync()) return {};
+      final j = jsonDecode(await _dl.readAsString()) as Map<String, dynamic>;
+      return j.map((k, v) => MapEntry(k, (v as num).toInt()));
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<void> saveDownloads(Map<String, int> m) async {
+    final tmp = File('${_dl.path}.${DateTime.now().microsecondsSinceEpoch}.tmp');
+    await tmp.writeAsString(jsonEncode(m));
+    await tmp.rename(_dl.path);
+  }
+
+  /// يُستدعى من زر "إيقاف" في الإشعار حين تكون الواجهة مغلقة.
+  Future<void> setServerOn(bool v) async {
+    try {
+      final j = jsonDecode(await _db.readAsString()) as Map<String, dynamic>;
+      j['serverOn'] = v;
+      final tmp = File('${_db.path}.${DateTime.now().microsecondsSinceEpoch}.tmp');
+      await tmp.writeAsString(jsonEncode(j));
+      await tmp.rename(_db.path);
+    } catch (_) {}
   }
 
   Future<void> deleteVersionFiles(ApkVersion v) async {
