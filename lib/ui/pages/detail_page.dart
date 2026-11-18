@@ -41,14 +41,14 @@ class DetailPage extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('رابط التحميل (مختصر)', style: TextStyle(color: context.cs.onSurfaceVariant)),
+                  Text('رابط التحميل', style: TextStyle(color: context.cs.onSurfaceVariant)),
                   const SizedBox(height: 8),
                   Row(children: [
                     Expanded(
                       child: Directionality(
                         textDirection: TextDirection.ltr,
-                        child: Text('…/${app.token}',
-                            style: TextStyle(color: context.cs.tertiary, fontSize: 20, fontWeight: FontWeight.w600)),
+                        child: SelectableText(link,
+                            style: TextStyle(color: context.cs.tertiary, fontSize: 16, fontWeight: FontWeight.w600)),
                       ),
                     ),
                     IconButton.filled(
