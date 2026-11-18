@@ -1,0 +1,49 @@
+import 'package:flutter/material.dart' hide Text;
+
+import 'theme.dart';
+
+/// رمز الشعار (يعود لأيقونة بديلة إن لم تُرفع ملفات assets).
+class BrandMark extends StatelessWidget {
+  const BrandMark({super.key, this.size = 40});
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+        'assets/mark.png',
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => Icon(Icons.dns_rounded, size: size, color: context.cs.primary),
+      );
+}
+
+/// أيقونة داخل مربع ملوّن شفاف.
+class IconBadge extends StatelessWidget {
+  const IconBadge(this.icon, {super.key, this.size = 40});
+  final IconData icon;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: context.cs.primary.withValues(alpha: .14),
+          borderRadius: BorderRadius.circular(size * .32),
+        ),
+        child: Icon(icon, size: size * .52, color: context.cs.primary),
+      );
+}
+
+/// خلفية بطاقة الحالة الرئيسية (تدرّج بألوان الشعار).
+BoxDecoration heroDecoration(BuildContext context) => BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      gradient: LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: context.isDark
+            ? const [Color(0xFF0F4A55), Color(0xFF0C2B4A)]
+            : const [Color(0xFFD9F7F1), Color(0xFFDDEBFA)],
+      ),
+      border: Border.all(color: context.isDark ? const Color(0x3322E5C0) : const Color(0x330A7C70)),
+    );
