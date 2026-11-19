@@ -86,8 +86,7 @@ jobs:
             lib/models/app_prefs.dart lib/ui/i18n.dart lib/core/net.dart \
             lib/services/server_runtime.dart lib/services/task_handler.dart \
             lib/ui/brand.dart lib/ui/splash_page.dart \
-            lib/ui/brand_assets.dart android_res/mipmap-xxxhdpi/ic_launcher.png \
-            android_res/drawable/launch_background.xml; do
+            lib/ui/brand_assets.dart; do
             if [ ! -f "$f" ]; then echo "::error::missing file: $f"; missing=1; fi
           done
           exit $missing
@@ -219,15 +218,87 @@ jobs:
         working-directory: ${{ env.APP_DIR }}
         run: sed -i 's/android:label="[^"]*"/android:label="Apk Server"/' android/app/src/main/AndroidManifest.xml
 
-      # أيقونة التطبيق وشاشة البداية الأصلية: ملفات جاهزة في android_res تُنسخ مباشرة (بلا حزم ولا توليد)
+      # أيقونة التطبيق وشاشة البداية الأصلية. نأخذ من المستودع صور PNG فقط،
+      # أما ملفات XML فتُكتب هنا (لا تتأثر بأخطاء الرفع) وكل جزء ناقص يُتخطّى بتحذير بدل أن يكسر البناء.
       - name: Apply branding resources
         working-directory: ${{ env.APP_DIR }}
         run: |
-          set -e
           RES=android/app/src/main/res
-          find "$RES" -name 'ic_launcher*' -not -path '*/values/*' -delete
-          cp -r android_res/. "$RES/"
-          echo "branding resources applied:"; ls "$RES"
+          if [ ! -d android_res ]; then echo "::warning::android_res not found, keeping default icon/splash"; exit 0; fi
+          # ملفات بأسماء غير صالحة (مثل D و V) تكسر aapt، فنحذفها؛ و XML نكتبه بأنفسنا
+          find android_res -type f ! -name '*.png' -print -delete
+          mkdir -p "$RES/values"
+
+          cat > "$RES/values/ic_launcher_background.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="ic_launcher_background">#0A1830</color>
+          </resources>
+          XML
+
+          # ── الأيقونة ──
+          if [ -f android_res/mipmap-xxxhdpi/ic_launcher.png ] && [ -f android_res/mipmap-hdpi/ic_launcher.png ]; then
+            find "$RES" -name 'ic_launcher*' -not -path '*/values/*' -delete
+            for d in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+              mkdir -p "$RES/$d"
+              cp -f android_res/$d/ic_launcher.png "$RES/$d/" 2>/dev/null || true
+              cp -f android_res/$d/ic_launcher_foreground.png "$RES/$d/" 2>/dev/null || true
+            done
+            if [ -f "$RES/mipmap-xxxhdpi/ic_launcher_foreground.png" ] && [ -f "$RES/mipmap-mdpi/ic_launcher_foreground.png" ]; then
+              mkdir -p "$RES/mipmap-anydpi-v26"
+              cat > "$RES/mipmap-anydpi-v26/ic_launcher.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+              <background android:drawable="@color/ic_launcher_background"/>
+              <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+          </adaptive-icon>
+          XML
+            fi
+          else
+            echo "::warning::launcher icon PNG files missing in android_res, keeping default icon"
+          fi
+
+          # ── شاشة البداية الأصلية ──
+          if [ -f android_res/drawable-nodpi/splash_mark.png ]; then
+            mkdir -p "$RES/drawable-nodpi"
+            cp -f android_res/drawable-nodpi/splash_mark.png "$RES/drawable-nodpi/"
+            for d in drawable drawable-v21 drawable-night drawable-night-v21; do
+              mkdir -p "$RES/$d"
+              cat > "$RES/$d/launch_background.xml" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:drawable="@color/ic_launcher_background" />
+              <item>
+                  <bitmap android:gravity="center" android:src="@drawable/splash_mark" />
+              </item>
+          </layer-list>
+          XML
+            done
+            for pair in "values-v31:Theme.Light.NoTitleBar" "values-night-v31:Theme.Black.NoTitleBar"; do
+              d=${pair%%:*}; parent=${pair##*:}
+              mkdir -p "$RES/$d"
+              cat > "$RES/$d/styles.xml" <<XML
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="LaunchTheme" parent="@android:style/$parent">
+                  <item name="android:windowBackground">@drawable/launch_background</item>
+                  <item name="android:windowSplashScreenBackground">@color/ic_launcher_background</item>
+                  <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_mark</item>
+                  <item name="android:forceDarkAllowed">false</item>
+                  <item name="android:windowFullscreen">false</item>
+                  <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+                  <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+              </style>
+              <style name="NormalTheme" parent="@android:style/$parent">
+                  <item name="android:windowBackground">?android:colorBackground</item>
+              </style>
+          </resources>
+          XML
+            done
+          else
+            echo "::warning::splash_mark.png missing, keeping default splash"
+          fi
+          echo "res folders:"; ls "$RES"
 
       - name: Analyze
         working-directory: ${{ env.APP_DIR }}
