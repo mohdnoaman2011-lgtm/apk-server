@@ -83,7 +83,11 @@ jobs:
             lib/ui/pages/dashboard_page.dart lib/ui/pages/detail_page.dart \
             lib/ui/pages/versions_page.dart lib/ui/pages/settings_page.dart \
             lib/ui/pages/tunnel_settings_page.dart lib/core/i18n.dart \
-            lib/models/app_prefs.dart lib/ui/i18n.dart; do
+            lib/models/app_prefs.dart lib/ui/i18n.dart lib/core/net.dart \
+            lib/services/server_runtime.dart lib/services/task_handler.dart \
+            lib/ui/brand.dart lib/ui/splash_page.dart \
+            lib/ui/brand_assets.dart android_res/mipmap-xxxhdpi/ic_launcher.png \
+            android_res/drawable/launch_background.xml; do
             if [ ! -f "$f" ]; then echo "::error::missing file: $f"; missing=1; fi
           done
           exit $missing
@@ -210,6 +214,20 @@ jobs:
       - name: Install dependencies
         working-directory: ${{ env.APP_DIR }}
         run: flutter pub get
+
+      - name: App name
+        working-directory: ${{ env.APP_DIR }}
+        run: sed -i 's/android:label="[^"]*"/android:label="Apk Server"/' android/app/src/main/AndroidManifest.xml
+
+      # أيقونة التطبيق وشاشة البداية الأصلية: ملفات جاهزة في android_res تُنسخ مباشرة (بلا حزم ولا توليد)
+      - name: Apply branding resources
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          set -e
+          RES=android/app/src/main/res
+          find "$RES" -name 'ic_launcher*' -not -path '*/values/*' -delete
+          cp -r android_res/. "$RES/"
+          echo "branding resources applied:"; ls "$RES"
 
       - name: Analyze
         working-directory: ${{ env.APP_DIR }}
