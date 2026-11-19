@@ -33,15 +33,13 @@ class DashboardPage extends StatelessWidget {
       const SizedBox(height: 20),
       const _Hero(),
       const SizedBox(height: 16),
-      IntrinsicHeight(
-        child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          _Stat(Icons.apps_rounded, 'تطبيقات', '${store.apps.length}'),
-          const SizedBox(width: 10),
-          _Stat(Icons.download_rounded, 'تحميلات', '$downloads'),
-          const SizedBox(width: 10),
-          _Stat(Icons.storage_rounded, 'مساحة', ltr(fmtSize(bytes))),
-        ]),
-      ),
+      Row(children: [
+        _Stat(Icons.apps_rounded, 'تطبيقات', '${store.apps.length}'),
+        const SizedBox(width: 10),
+        _Stat(Icons.download_rounded, 'تحميلات', '$downloads'),
+        const SizedBox(width: 10),
+        _Stat(Icons.storage_rounded, 'مساحة', ltr(fmtSize(bytes))),
+      ]),
       const SizedBox(height: 22),
       Row(children: [
         const Text('تطبيقاتي', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
@@ -86,11 +84,11 @@ class _Hero extends StatelessWidget {
     }
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       decoration: heroDecoration(context),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const StatusChip(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
         if (store.publicUrl != null)
           Row(children: [
@@ -127,24 +125,22 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Expanded(
-        child: Card(
-          margin: EdgeInsets.zero,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+        child: SizedBox(
+          height: 120,
+          child: Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 IconBadge(icon, size: 34),
-                const SizedBox(height: 12),
+                const Spacer(),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,
-                  child: Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                  child: Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                 ),
-                const SizedBox(height: 2),
-                Text(label, style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13)),
-              ],
+                Text(label, style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 12)),
+              ]),
             ),
           ),
         ),
@@ -208,11 +204,17 @@ class _AppTile extends StatelessWidget {
                   ],
                 ]),
                 const SizedBox(height: 4),
-                Wrap(spacing: 8, children: [
-                  Text(ltr('v${app.current.versionName} · ${fmtSize(app.current.size)}'),
-                      style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
-                  Text('${app.downloads} ${tr(context, 'تحميل')}',
-                      style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
+                Row(children: [
+                  Flexible(
+                    child: Text(ltr('v${app.current.versionName} · ${fmtSize(app.current.size)}'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
+                  ),
+                  const SizedBox(width: 12),
+                  Icon(Icons.download_rounded, size: 15, color: cs.onSurfaceVariant),
+                  const SizedBox(width: 3),
+                  Text('${app.downloads}', style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
                 ]),
               ]),
             ),
