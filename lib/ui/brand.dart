@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart' hide Text;
 
+import 'brand_assets.dart';
 import 'theme.dart';
 
-/// رمز الشعار (يعود لأيقونة بديلة إن لم تُرفع ملفات assets).
+/// رمز الشعار الحقيقي (مضمَّن داخل الكود).
 class BrandMark extends StatelessWidget {
   const BrandMark({super.key, this.size = 40});
   final double size;
 
   @override
-  Widget build(BuildContext context) => Image.asset(
-        'assets/mark.png',
+  Widget build(BuildContext context) => Image.memory(
+        kMarkBytes,
         width: size,
         height: size,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => Icon(Icons.dns_rounded, size: size, color: context.cs.primary),
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.high,
       );
 }
 
