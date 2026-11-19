@@ -112,4 +112,7 @@ const _en = <String, String>{
   'فعّل النفق للوصول من الإنترنت': 'Enable the tunnel for internet access',
   'معطّل': 'Disabled',
   'اضغط "رفع ملف APK" للبدء': 'Tap "Upload APK file" to get started',
+  'جارٍ التهيئة…': 'Initializing…',
+  'تشغيل الخدمة…': 'Starting service…',
+  'جاهز': 'Ready',
 };
