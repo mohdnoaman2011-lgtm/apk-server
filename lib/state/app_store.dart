@@ -137,6 +137,9 @@ class AppStore extends ChangeNotifier {
     _commit();
   }
 
+  /// يطلب من الخدمة إعادة محاولة فتح النفق.
+  void retryTunnel() => FlutterForegroundTask.sendDataToTask({'cmd': 'reload'});
+
   void setTunnelConfig(TunnelConfig c) {
     tunnelConfig = c;
     notifyListeners();
