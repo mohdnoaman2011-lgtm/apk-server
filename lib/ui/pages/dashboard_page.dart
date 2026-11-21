@@ -127,13 +127,19 @@ class _Hero extends StatelessWidget {
         ),
       ]);
     } else if (opening) {
-      action = Column(children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(99),
-          child: const LinearProgressIndicator(minHeight: 4),
+      action = Row(children: [
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: const LinearProgressIndicator(minHeight: 4),
+          ),
         ),
-        const SizedBox(height: 8),
-        TextButton(onPressed: () => store.setTunnel(false), child: const Text('إلغاء')),
+        const SizedBox(width: 8),
+        TextButton(
+          style: TextButton.styleFrom(minimumSize: const Size(0, 36), padding: const EdgeInsets.symmetric(horizontal: 10)),
+          onPressed: () => store.setTunnel(false),
+          child: const Text('إلغاء'),
+        ),
       ]);
     } else if (store.tunnelOn && store.tunnelError != null) {
       action = Row(children: [
@@ -256,10 +262,10 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 36),
+        padding: const EdgeInsets.only(top: 12, bottom: 24),
         child: Column(children: [
-          const IconBadge(Icons.cloud_upload_outlined, size: 72),
-          const SizedBox(height: 16),
+          const IconBadge(Icons.cloud_upload_outlined, size: 60),
+          const SizedBox(height: 12),
           const Text('لم ترفع أي تطبيق بعد', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           Text('اضغط على زر الرفع للبدء', style: TextStyle(color: context.cs.onSurfaceVariant)),
