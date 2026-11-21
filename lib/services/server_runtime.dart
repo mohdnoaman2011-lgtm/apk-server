@@ -148,7 +148,10 @@ class ServerRuntime {
     tunnelError = null;
     _emitStatus();
     try {
-      final r = await _tunnel.start(tunnelConfig);
+      final r = await _tunnel.start(tunnelConfig).timeout(
+        const Duration(seconds: 45),
+        onTimeout: () => throw tr0('انتهت مهلة الاتصال بخادم النفق'),
+      );
       if (gen != _gen) {
         await _tunnel.stop(); // أُلغي الطلب أثناء الاتصال
         _scheduleRetry();
