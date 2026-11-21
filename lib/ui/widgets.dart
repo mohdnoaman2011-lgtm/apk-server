@@ -60,7 +60,8 @@ void copyLink(BuildContext context, String link) {
 }
 
 class StatusChip extends StatelessWidget {
-  const StatusChip({super.key});
+  const StatusChip({super.key, this.dense = false});
+  final bool dense;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +71,7 @@ class StatusChip extends StatelessWidget {
             ? (context.cs.secondary, 'لا يوجد اتصال')
             : (context.cs.primary, 'السيرفر يعمل');
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: dense ? 10 : 14, vertical: dense ? 6 : 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .14),
         borderRadius: BorderRadius.circular(999),
@@ -79,7 +80,7 @@ class StatusChip extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(Icons.circle, size: 9, color: color),
         const SizedBox(width: 8),
-        Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13)),
+        Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: dense ? 12 : 13)),
       ]),
     );
   }
