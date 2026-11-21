@@ -67,7 +67,7 @@ jobs:
             rm -rf test
             flutter pub add shelf:^1.4.1 file_picker:^8.1.2 qr_flutter:^4.1.0 \
               network_info_plus:^6.0.0 connectivity_plus:^6.0.5 path_provider:^2.1.4 \
-              flutter_foreground_task:^8.17.0 dartssh2:^2.10.0
+              flutter_foreground_task:^8.17.0 dartssh2:^2.10.0 google_fonts
           fi
 
       - name: Verify source files
@@ -209,6 +209,22 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
           printf 'storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=upload-keystore.jks\n' \
             "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
+
+      # يضمن وجود كل الحزم المطلوبة حتى لو كان pubspec.yaml موجوداً في المستودع (ينقص منه ما لم يُضَف بعد)
+      - name: Ensure required packages
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          set -e
+          for spec in shelf:^1.4.1 file_picker:^8.1.2 qr_flutter:^4.1.0 network_info_plus:^6.0.0 \
+                      connectivity_plus:^6.0.5 path_provider:^2.1.4 flutter_foreground_task:^8.17.0 \
+                      dartssh2:^2.10.0 google_fonts; do
+            name=${spec%%:*}
+            if ! grep -qE "^[[:space:]]+$name:" pubspec.yaml; then
+              echo "adding $spec"
+              flutter pub add "$spec"
+            fi
+          done
+
 
       - name: Install dependencies
         working-directory: ${{ env.APP_DIR }}
