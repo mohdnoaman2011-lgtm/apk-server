@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ألوان مستخرجة من شعار Apk Server
 const kBg = Color(0xFF0A1830);
@@ -27,14 +28,18 @@ ThemeData buildTheme(Brightness b) {
     error: dark ? const Color(0xFFFF8A80) : const Color(0xFFB3261E),
   );
   final card = dark ? kSurface : Colors.white;
+  // الخط الموحّد للتطبيق كله
+  final tt = GoogleFonts.ibmPlexSansArabicTextTheme(ThemeData(brightness: b).textTheme)
+      .apply(bodyColor: cs.onSurface, displayColor: cs.onSurface);
   return ThemeData(
     useMaterial3: true,
     colorScheme: cs,
+    textTheme: tt,
     scaffoldBackgroundColor: cs.surface,
     appBarTheme: AppBarTheme(
       backgroundColor: cs.surface,
       surfaceTintColor: Colors.transparent,
-      titleTextStyle: TextStyle(color: cs.onSurface, fontSize: 20, fontWeight: FontWeight.w700),
+      titleTextStyle: tt.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
     ),
     cardTheme: CardThemeData(
       color: card,
