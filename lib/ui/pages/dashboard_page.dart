@@ -17,22 +17,25 @@ class DashboardPage extends StatelessWidget {
     final cs = context.cs;
     final downloads = store.apps.fold<int>(0, (s, a) => s + a.downloads);
     final bytes = store.apps.fold<int>(0, (s, a) => s + a.versions.fold(0, (x, v) => x + v.size));
-    return ListView(padding: const EdgeInsets.fromLTRB(20, 16, 20, 120), children: [
+    return ListView(padding: const EdgeInsets.fromLTRB(20, 14, 20, 120), children: [
+      // ── الترويسة: الشعار والاسم + حالة السيرفر ──
       Row(children: [
-        const BrandMark(size: 46),
+        const BrandMark(size: 52),
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const LtrText('Apk Server',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -.3)),
+            const SizedBox(height: 2),
             Text('خادم تطبيقاتك الشخصي',
                 style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
           ]),
         ),
+        const StatusChip(),
       ]),
-      const SizedBox(height: 20),
+      const SizedBox(height: 22),
       const _Hero(),
-      const SizedBox(height: 16),
+      const SizedBox(height: 14),
       Row(children: [
         _Stat(Icons.apps_rounded, 'تطبيقات', '${store.apps.length}'),
         const SizedBox(width: 10),
@@ -40,7 +43,7 @@ class DashboardPage extends StatelessWidget {
         const SizedBox(width: 10),
         _Stat(Icons.storage_rounded, 'مساحة', ltr(fmtSize(bytes))),
       ]),
-      const SizedBox(height: 22),
+      const SizedBox(height: 26),
       Row(children: [
         const Text('تطبيقاتي', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         const SizedBox(width: 8),
@@ -61,55 +64,128 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
-/// بطاقة الحالة الرئيسية.
+/// بطاقة الاتصال: الحالة + الرابط العام + زر الإجراء المناسب.
 class _Hero extends StatelessWidget {
   const _Hero();
 
   @override
   Widget build(BuildContext context) {
     final cs = context.cs;
+    final IconData icon;
     final String title;
     String sub = '';
+    final bool opening = store.tunnelOn && store.tunnelBusy;
     if (!store.running) {
+      icon = Icons.power_settings_new_rounded;
       title = 'السيرفر متوقف';
-      sub = 'شغّله من الإعدادات';
+      sub = 'شغّله لبدء استقبال التحميلات';
     } else if (!store.online) {
+      icon = Icons.wifi_off_rounded;
       title = 'لا يوجد اتصال';
       sub = 'سيعود تلقائياً عند توفر الشبكة';
     } else if (store.publicUrl != null) {
-      title = 'الرابط العام';
+      icon = Icons.public_rounded;
+      title = 'متاح على الإنترنت';
+      sub = 'شارك الرابط العام مع أي شخص';
+    } else if (opening) {
+      icon = Icons.sync_rounded;
+      title = 'جارٍ فتح النفق…';
     } else {
+      icon = Icons.wifi_tethering_rounded;
       title = 'يعمل على الشبكة المحلية';
       sub = 'فعّل النفق للوصول من الإنترنت';
     }
+
+    final Widget? action;
+    if (!store.running) {
+      action = FilledButton.icon(
+        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+        onPressed: () => store.setServer(true),
+        icon: const Icon(Icons.play_arrow_rounded),
+        label: const Text('تشغيل السيرفر'),
+      );
+    } else if (store.publicUrl != null) {
+      action = Row(children: [
+        Expanded(
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            onPressed: () => copyLink(context, store.publicUrl!),
+            icon: const Icon(Icons.copy_rounded, size: 18),
+            label: const Text('نسخ الرابط العام'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+          onPressed: () => store.setTunnel(false),
+          icon: const Icon(Icons.stop_rounded, size: 18),
+          label: const Text('إيقاف النفق'),
+        ),
+      ]);
+    } else if (opening) {
+      action = ClipRRect(
+        borderRadius: BorderRadius.circular(99),
+        child: const LinearProgressIndicator(minHeight: 4),
+      );
+    } else if (store.online) {
+      action = FilledButton.icon(
+        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+        onPressed: () => store.setTunnel(true),
+        icon: const Icon(Icons.public_rounded, size: 20),
+        label: const Text('تفعيل الوصول من الإنترنت'),
+      );
+    } else {
+      action = null;
+    }
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      padding: const EdgeInsets.all(18),
       decoration: heroDecoration(context),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const StatusChip(),
-        const SizedBox(height: 14),
-        Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-        if (store.publicUrl != null)
-          Row(children: [
-            Expanded(
-              child: LtrText(store.publicUrl!,
-                  style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600)),
+        Row(children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: .16),
+              borderRadius: BorderRadius.circular(16),
             ),
-            IconButton(
-              tooltip: tr(context, 'نسخ الرابط'),
-              icon: Icon(Icons.copy_rounded, color: cs.primary),
-              onPressed: () => copyLink(context, store.publicUrl!),
-            ),
-          ])
-        else
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(sub, style: TextStyle(color: cs.onSurfaceVariant)),
+            child: Icon(icon, color: cs.primary, size: 26),
           ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+              if (sub.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(sub, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
+              ],
+            ]),
+          ),
+        ]),
+        if (store.publicUrl != null) ...[
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+            decoration: BoxDecoration(
+              color: cs.surface.withValues(alpha: .45),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(children: [
+              Icon(Icons.link_rounded, size: 18, color: cs.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: LtrText(store.publicUrl!,
+                    style: TextStyle(color: cs.primary, fontWeight: FontWeight.w600, fontSize: 14)),
+              ),
+            ]),
+          ),
+        ],
+        if (action != null) ...[const SizedBox(height: 16), action],
         if (store.error != null)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: 10),
             child: Text(store.error!, style: TextStyle(color: cs.error)),
           ),
       ]),
@@ -126,13 +202,13 @@ class _Stat extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Expanded(
         child: SizedBox(
-          height: 120,
+          height: 112,
           child: Card(
             margin: EdgeInsets.zero,
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                IconBadge(icon, size: 34),
+                IconBadge(icon, size: 32),
                 const Spacer(),
                 FittedBox(
                   fit: BoxFit.scaleDown,
@@ -203,7 +279,7 @@ class _AppTile extends StatelessWidget {
                     ),
                   ],
                 ]),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
                 Row(children: [
                   Flexible(
                     child: Text(ltr('v${app.current.versionName} · ${fmtSize(app.current.size)}'),
@@ -218,9 +294,11 @@ class _AppTile extends StatelessWidget {
                 ]),
               ]),
             ),
-            IconButton(
+            const SizedBox(width: 8),
+            IconButton.filledTonal(
               tooltip: tr(context, 'نسخ الرابط'),
-              icon: Icon(Icons.copy_rounded, color: cs.primary),
+              icon: Icon(Icons.copy_rounded, size: 20, color: cs.primary),
+              style: IconButton.styleFrom(backgroundColor: cs.primary.withValues(alpha: .12)),
               onPressed: () => copyLink(context, store.link(app)),
             ),
           ]),

@@ -30,6 +30,7 @@ class _ShellState extends State<Shell> {
           ]),
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => uploadApk(context),
         icon: const Icon(Icons.upload_rounded),
