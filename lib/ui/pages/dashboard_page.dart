@@ -90,6 +90,10 @@ class _Hero extends StatelessWidget {
     } else if (opening) {
       icon = Icons.sync_rounded;
       title = 'جارٍ فتح النفق…';
+    } else if (store.tunnelOn && store.tunnelError != null) {
+      icon = Icons.error_outline_rounded;
+      title = 'تعذّر فتح النفق';
+      sub = store.tunnelError!;
     } else {
       icon = Icons.wifi_tethering_rounded;
       title = 'يعمل على الشبكة المحلية';
@@ -123,10 +127,31 @@ class _Hero extends StatelessWidget {
         ),
       ]);
     } else if (opening) {
-      action = ClipRRect(
-        borderRadius: BorderRadius.circular(99),
-        child: const LinearProgressIndicator(minHeight: 4),
-      );
+      action = Column(children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(99),
+          child: const LinearProgressIndicator(minHeight: 4),
+        ),
+        const SizedBox(height: 8),
+        TextButton(onPressed: () => store.setTunnel(false), child: const Text('إلغاء')),
+      ]);
+    } else if (store.tunnelOn && store.tunnelError != null) {
+      action = Row(children: [
+        Expanded(
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+            onPressed: store.retryTunnel,
+            icon: const Icon(Icons.refresh_rounded, size: 20),
+            label: const Text('إعادة المحاولة'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        OutlinedButton(
+          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+          onPressed: () => store.setTunnel(false),
+          child: const Text('إلغاء'),
+        ),
+      ]);
     } else if (store.online) {
       action = FilledButton.icon(
         style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
@@ -159,7 +184,10 @@ class _Hero extends StatelessWidget {
               Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
               if (sub.isNotEmpty) ...[
                 const SizedBox(height: 2),
-                Text(sub, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
+                Text(sub,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
               ],
             ]),
           ),
@@ -234,7 +262,7 @@ class _Empty extends StatelessWidget {
           const SizedBox(height: 16),
           const Text('لم ترفع أي تطبيق بعد', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
-          Text('اضغط "رفع ملف APK" للبدء', style: TextStyle(color: context.cs.onSurfaceVariant)),
+          Text('اضغط على زر الرفع للبدء', style: TextStyle(color: context.cs.onSurfaceVariant)),
         ]),
       );
 }
