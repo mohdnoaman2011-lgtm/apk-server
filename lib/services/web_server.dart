@@ -79,14 +79,15 @@ class WebServer {
         : '<div class="card"><b>${tr0('ما الجديد')}</b><br>${e.convert(v.notes)}</div>';
     final olds = old.isEmpty ? '' : '<div class="card"><b>${tr0('الإصدارات السابقة')}</b><ul>$old</ul></div>';
     return '''<!doctype html><html lang="${isAr ? 'ar' : 'en'}" dir="${isAr ? 'rtl' : 'ltr'}"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>${e.convert(a.name)}</title>
-<style>body{margin:0;background:#0F1419;color:#E8EDF2;font-family:system-ui,sans-serif}
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap"><title>${e.convert(a.name)}</title>
+<style>body{margin:0;background:#0A1830;color:#E8EEF7;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif}
 main{max-width:640px;margin:0 auto;padding:40px 20px;display:flex;flex-direction:column;gap:20px}
 .ic{width:96px;height:96px;border-radius:26px}
-.chip{background:#171E27;border:1px solid #232C37;border-radius:99px;padding:6px 12px;font-size:14px}
-.btn{background:#3DDC84;color:#06240F;border-radius:14px;padding:16px;text-align:center;font-weight:700;font-size:18px;text-decoration:none}
-.card{background:#171E27;border:1px solid #232C37;border-radius:16px;padding:16px;line-height:1.8}
-.muted{color:#9AA7B5;font-size:14px;direction:ltr;text-align:${isAr ? 'right' : 'left'};margin:0}
+.chip{background:#11223F;border:1px solid #1D3358;border-radius:99px;padding:6px 12px;font-size:14px}
+.btn{background:#22E5C0;color:#04201B;border-radius:14px;padding:16px;text-align:center;font-weight:700;font-size:18px;text-decoration:none}
+.card{background:#11223F;border:1px solid #1D3358;border-radius:16px;padding:16px;line-height:1.8}
+.muted{color:#8CA2C2;font-size:14px;direction:ltr;text-align:${isAr ? 'right' : 'left'};margin:0}
 a{color:#7CC4FF}</style></head><body><main>
 <img class="ic" src="/${a.token}/icon.png" alt="">
 <div><h1 style="margin:0 0 4px">${e.convert(a.name)}</h1><p class="muted">${e.convert(a.id)}</p></div>
