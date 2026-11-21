@@ -126,4 +126,7 @@ const _en = <String, String>{
   'شغّله لبدء استقبال التحميلات': 'Turn it on to start receiving downloads',
   'متاح على الإنترنت': 'Available on the internet',
   'شارك الرابط العام مع أي شخص': 'Share the public link with anyone',
+  'انتهت مهلة الاتصال بخادم النفق': 'Timed out connecting to the tunnel server',
+  'إعادة المحاولة': 'Retry',
+  'اضغط على زر الرفع للبدء': 'Tap the upload button to get started',
 };
