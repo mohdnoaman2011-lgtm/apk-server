@@ -1,7 +1,8 @@
-enum TunnelProvider { localhostRun, ngrok, custom }
+enum TunnelProvider { localhostRun, pinggy, ngrok, custom }
 
 /// إعدادات النفق. كل الأنواع تعمل عبر SSH (بدون ملفات تنفيذية إضافية):
 ///  • localhostRun: رابط عشوائي مؤقت (مجاني)
+///  • pinggy:       رابط مؤقت عبر المنفذ 443 (لشبكات تحظر 22)
 ///  • ngrok:        نطاق ثابت مجاني من حساب ngrok
 ///  • custom:       خادمك الخاص (VPS) بنطاقك أنت
 class TunnelConfig {
@@ -31,7 +32,7 @@ class TunnelConfig {
       ngrokDomain.trim().replaceFirst(RegExp(r'^https?://'), '').replaceAll('/', '');
 
   bool get isValid => switch (provider) {
-        TunnelProvider.localhostRun => true,
+        TunnelProvider.localhostRun || TunnelProvider.pinggy => true,
         TunnelProvider.ngrok => ngrokToken.trim().isNotEmpty && ngrokHost.isNotEmpty,
         TunnelProvider.custom =>
           host.trim().isNotEmpty && user.trim().isNotEmpty && publicUrl.trim().isNotEmpty,
@@ -39,6 +40,7 @@ class TunnelConfig {
 
   String get label => switch (provider) {
         TunnelProvider.localhostRun => 'رابط مؤقت (localhost.run)',
+        TunnelProvider.pinggy => 'رابط مؤقت (Pinggy · 443)',
         TunnelProvider.ngrok => 'رابط ثابت (ngrok)',
         TunnelProvider.custom => 'خادمي الخاص',
       };
