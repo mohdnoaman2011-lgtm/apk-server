@@ -129,4 +129,13 @@ const _en = <String, String>{
   'انتهت مهلة الاتصال بخادم النفق': 'Timed out connecting to the tunnel server',
   'إعادة المحاولة': 'Retry',
   'اضغط على زر الرفع للبدء': 'Tap the upload button to get started',
+  'انتهت المهلة في خطوة': 'Timed out at step',
+  'سجل النفق': 'Tunnel log',
+  'تتبّع مراحل الاتصال لمعرفة سبب الفشل': 'Trace the connection steps to find the cause of failure',
+  'لا توجد سجلات بعد': 'No log entries yet',
+  'إغلاق': 'Close',
+  'مؤقت 1': 'Temp 1',
+  'مؤقت 2': 'Temp 2',
+  'رابط مؤقت (Pinggy · 443)': 'Temporary link (Pinggy · 443)',
+  'رابط مؤقت عبر المنفذ 443، جرّبه إن كان المنفذ 22 محظوراً على شبكتك (تحظره بعض الشبكات وشركات الاتصالات).': 'A temporary link over port 443. Try it if port 22 is blocked on your network (some networks and carriers block it).',
 };
