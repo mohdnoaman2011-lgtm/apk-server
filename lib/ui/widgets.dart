@@ -71,16 +71,16 @@ class StatusChip extends StatelessWidget {
             ? (context.cs.secondary, 'لا يوجد اتصال')
             : (context.cs.primary, 'السيرفر يعمل');
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: dense ? 10 : 14, vertical: dense ? 6 : 8),
+      padding: EdgeInsets.symmetric(horizontal: dense ? 9 : 11, vertical: dense ? 5 : 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .14),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: color.withValues(alpha: .45)),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.circle, size: 9, color: color),
-        const SizedBox(width: 8),
-        Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: dense ? 12 : 13)),
+        Icon(Icons.circle, size: 8, color: color),
+        const SizedBox(width: 6),
+        Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: dense ? 11 : 12)),
       ]),
     );
   }

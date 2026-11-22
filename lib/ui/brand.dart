@@ -39,7 +39,7 @@ class IconBadge extends StatelessWidget {
 
 /// خلفية بطاقة الحالة الرئيسية (تدرّج بألوان الشعار).
 BoxDecoration heroDecoration(BuildContext context) => BoxDecoration(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       gradient: LinearGradient(
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,

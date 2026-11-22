@@ -30,7 +30,7 @@ ThemeData buildTheme(Brightness b) {
   final card = dark ? kSurface : Colors.white;
   // الخط الموحّد للتطبيق كله
   final tt = GoogleFonts.ibmPlexSansArabicTextTheme(ThemeData(brightness: b).textTheme)
-      .apply(bodyColor: cs.onSurface, displayColor: cs.onSurface);
+      .apply(fontSizeFactor: .92, bodyColor: cs.onSurface, displayColor: cs.onSurface);
   return ThemeData(
     useMaterial3: true,
     colorScheme: cs,
@@ -39,14 +39,14 @@ ThemeData buildTheme(Brightness b) {
     appBarTheme: AppBarTheme(
       backgroundColor: cs.surface,
       surfaceTintColor: Colors.transparent,
-      titleTextStyle: tt.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.w700),
+      titleTextStyle: tt.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
     ),
     cardTheme: CardThemeData(
       color: card,
       elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: cs.outlineVariant),
       ),
     ),
@@ -54,7 +54,7 @@ ThemeData buildTheme(Brightness b) {
       backgroundColor: dark ? const Color(0xFF0D1D3A) : Colors.white,
       surfaceTintColor: Colors.transparent,
       indicatorColor: cs.primary.withValues(alpha: .16),
-      height: 70,
+      height: 62,
       labelTextStyle: WidgetStatePropertyAll(
         TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurfaceVariant),
       ),
@@ -65,7 +65,9 @@ ThemeData buildTheme(Brightness b) {
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: cs.primary,
       foregroundColor: cs.onPrimary,
-      extendedTextStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+      extendedTextStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+      extendedSizeConstraints: const BoxConstraints.tightFor(height: 46),
+      extendedPadding: const EdgeInsetsDirectional.symmetric(horizontal: 18),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
     ),
     filledButtonTheme: FilledButtonThemeData(
