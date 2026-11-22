@@ -36,6 +36,7 @@ class AppStore extends ChangeNotifier {
   bool tunnelBusy = false;
   String? publicUrl;
   String? tunnelError;
+  List<String> tunnelLog = [];
 
   bool picking = false; // أثناء اختيار/نسخ ملف الـ APK
   Future<void> _saving = Future.value();
@@ -89,6 +90,8 @@ class AppStore extends ChangeNotifier {
         tunnelBusy = d['tunnelBusy'] == true;
         tunnelError = d['tunnelError'] as String?;
         error = d['serverError'] as String?;
+      case 'log':
+        tunnelLog = List<String>.from(d['lines'] as List);
       case 'downloads':
         _applyDownloads((d['map'] as Map).map((k, v) => MapEntry(k as String, (v as num).toInt())));
       case 'stopped':
