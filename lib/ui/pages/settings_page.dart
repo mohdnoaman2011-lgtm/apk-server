@@ -26,6 +26,32 @@ class SettingsPage extends StatelessWidget {
         ),
       );
 
+  void _showLog(BuildContext context) {
+    final text = store.tunnelLog.isEmpty ? tr(context, 'لا توجد سجلات بعد') : store.tunnelLog.join('\n');
+    showDialog<void>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('سجل النفق'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: SelectableText(text, style: const TextStyle(fontSize: 12, height: 1.5)),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => copyLink(c, text),
+            child: const Text('نسخ'),
+          ),
+          TextButton(onPressed: () => Navigator.pop(c), child: const Text('إغلاق')),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final rtl = Directionality.of(context) == TextDirection.rtl;
@@ -67,6 +93,15 @@ class SettingsPage extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (_) => const TunnelSettingsPage()),
           ),
+        ),
+      ),
+      Card(
+        child: ListTile(
+          leading: const Icon(Icons.bug_report_outlined),
+          title: const Text('سجل النفق'),
+          subtitle: const Text('تتبّع مراحل الاتصال لمعرفة سبب الفشل'),
+          trailing: Icon(rtl ? Icons.chevron_left_rounded : Icons.chevron_right_rounded),
+          onTap: () => _showLog(context),
         ),
       ),
       _group(

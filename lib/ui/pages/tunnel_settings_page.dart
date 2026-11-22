@@ -72,7 +72,8 @@ class _TunnelSettingsPageState extends State<TunnelSettingsPage> {
       body: ListView(padding: const EdgeInsets.all(20), children: [
         SegmentedButton<TunnelProvider>(
           segments: const [
-            ButtonSegment(value: TunnelProvider.localhostRun, label: Text('مؤقت')),
+            ButtonSegment(value: TunnelProvider.localhostRun, label: Text('مؤقت 1')),
+            ButtonSegment(value: TunnelProvider.pinggy, label: Text('مؤقت 2')),
             ButtonSegment(value: TunnelProvider.ngrok, label: Text('ngrok')),
             ButtonSegment(value: TunnelProvider.custom, label: Text('خادمي')),
           ],
@@ -82,6 +83,8 @@ class _TunnelSettingsPageState extends State<TunnelSettingsPage> {
         const SizedBox(height: 20),
         if (provider == TunnelProvider.localhostRun)
           _help('رابط عشوائي مجاني يتغيّر عند كل إعادة اتصال. لا يحتاج أي إعداد.'),
+        if (provider == TunnelProvider.pinggy)
+          _help('رابط مؤقت عبر المنفذ 443، جرّبه إن كان المنفذ 22 محظوراً على شبكتك (تحظره بعض الشبكات وشركات الاتصالات).'),
         if (provider == TunnelProvider.ngrok) ...[
           _help('رابط ثابت مجاني:\n'
               '١) أنشئ حساباً على ngrok.com\n'
