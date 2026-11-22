@@ -67,7 +67,7 @@ jobs:
             rm -rf test
             flutter pub add shelf:^1.4.1 file_picker:^8.1.2 qr_flutter:^4.1.0 \
               network_info_plus:^6.0.0 connectivity_plus:^6.0.5 path_provider:^2.1.4 \
-              flutter_foreground_task:^8.17.0 dartssh2:^2.10.0 google_fonts
+              flutter_foreground_task:^8.17.0 dartssh2:^2.10.0 google_fonts:^6.2.1
           fi
 
       - name: Verify source files
@@ -217,13 +217,15 @@ jobs:
           set -e
           for spec in shelf:^1.4.1 file_picker:^8.1.2 qr_flutter:^4.1.0 network_info_plus:^6.0.0 \
                       connectivity_plus:^6.0.5 path_provider:^2.1.4 flutter_foreground_task:^8.17.0 \
-                      dartssh2:^2.10.0 google_fonts; do
+                      dartssh2:^2.10.0 google_fonts:^6.2.1; do
             name=${spec%%:*}
             if ! grep -qE "^[[:space:]]+$name:" pubspec.yaml; then
               echo "adding $spec"
               flutter pub add "$spec"
             fi
           done
+          # google_fonts 9 مبني على material_ui فيتعارض نوع TextTheme مع flutter/material؛ نثبّت الإصدار 6
+          flutter pub add google_fonts:^6.3.0
 
 
       - name: Install dependencies
