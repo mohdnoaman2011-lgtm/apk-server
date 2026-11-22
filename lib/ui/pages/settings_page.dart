@@ -64,7 +64,7 @@ class SettingsPage extends StatelessWidget {
                 : const Text('ينشئ رابط https عاماً يعمل من أي شبكة.');
 
     return ListView(padding: const EdgeInsets.all(20), children: [
-      const Text('الإعدادات', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+      const Text('الإعدادات', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
       const SizedBox(height: 12),
       Card(
         child: SwitchListTile(

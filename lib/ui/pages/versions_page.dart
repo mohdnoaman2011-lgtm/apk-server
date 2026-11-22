@@ -13,7 +13,7 @@ class VersionsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(padding: const EdgeInsets.fromLTRB(20, 16, 20, 96), children: [
-      const Text('سجل الإصدارات', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+      const Text('سجل الإصدارات', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
       const SizedBox(height: 12),
       if (store.apps.isEmpty)
         Padding(

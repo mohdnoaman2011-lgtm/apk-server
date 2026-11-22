@@ -29,7 +29,7 @@ class DetailPage extends StatelessWidget {
               const SizedBox(width: 14),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(app.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                  Text(app.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                   LtrText(app.id, style: TextStyle(color: context.cs.onSurfaceVariant, fontSize: 13)),
                   Text('${tr(context, 'الإصدار')} ${ltr(app.current.versionName)} · ${ltr(fmtSize(app.current.size))}',
                       style: TextStyle(color: context.cs.onSurfaceVariant)),
