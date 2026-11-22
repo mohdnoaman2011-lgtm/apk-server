@@ -17,9 +17,31 @@ class TunnelService {
   final void Function(String)? onLog;
   SSHClient? _client;
 
-  static final _urlRe = RegExp(
-    r'https://[a-z0-9.-]+\.(?:lhr\.life|localhost\.run|pinggy\.link|pinggy\.io)',
-  );
+  static final _anyUrl = RegExp(r"https?://[^\s'<>)\]]+");
+  // روابط تظهر في رسائل الخادم لكنها ليست رابط النفق
+  static const _ignoreHosts = {
+    'admin.localhost.run',
+    'localhost.run',
+    'www.localhost.run',
+    'dashboard.pinggy.io',
+    'pinggy.io',
+    'www.pinggy.io',
+  };
+  static const _okSuffix = ['lhr.life', 'pinggy.link', 'pinggy.online', 'pinggy.io', 'localhost.run'];
+
+  /// يختار رابط النفق الحقيقي (https) من نص الخادم.
+  String? _pickUrl(String text) {
+    for (final m in _anyUrl.allMatches(text)) {
+      final u = m.group(0)!.replaceAll(RegExp(r'[.,;:]+$'), '');
+      final uri = Uri.tryParse(u);
+      if (uri == null || uri.host.isEmpty || uri.scheme != 'https') continue;
+      final h = uri.host.toLowerCase();
+      if (_ignoreHosts.contains(h)) continue;
+      if (!_okSuffix.any((x) => h == x || h.endsWith('.$x'))) continue;
+      return 'https://$h';
+    }
+    return null;
+  }
 
   void _log(String m) => onLog?.call(m);
 
@@ -140,8 +162,8 @@ class TunnelService {
     s.stdout.cast<List<int>>().transform(utf8.decoder).listen((chunk) {
       _log('server: ${_short(chunk)}');
       buf.write(chunk);
-      final m = _urlRe.firstMatch(buf.toString());
-      if (m != null && !found.isCompleted) found.complete(m.group(0)!);
+      final u = _pickUrl(buf.toString());
+      if (u != null && !found.isCompleted) found.complete(u);
     });
     return found.future;
   }
