@@ -17,7 +17,8 @@ import 'web_server.dart';
 class ServerRuntime {
   final _storage = Storage();
   late final WebServer _server = WebServer(getApps: () => apps, onDownload: _onDownload);
-  final _tunnel = TunnelService(kPort);
+  late final _tunnel = TunnelService(kPort, onLog: _addLog);
+  final List<String> _logLines = [];
   void Function(Map<String, dynamic>) _emit = (_) {};
 
   List<ApkApp> apps = [];
@@ -95,6 +96,7 @@ class ServerRuntime {
       await reload();
     } else if (cmd == 'status') {
       _emitStatus();
+      _emit({'t': 'log', 'lines': _logLines});
       _emit({'t': 'downloads', 'map': _downloads});
     }
   }
@@ -149,7 +151,7 @@ class ServerRuntime {
     _emitStatus();
     try {
       final r = await _tunnel.start(tunnelConfig).timeout(
-        const Duration(seconds: 45),
+        const Duration(seconds: 80),
         onTimeout: () => throw tr0('انتهت مهلة الاتصال بخادم النفق'),
       );
       if (gen != _gen) {
@@ -207,6 +209,14 @@ class ServerRuntime {
         notificationButtons: [NotificationButton(id: 'stop', text: tr0('إيقاف'))],
       );
     } catch (_) {}
+  }
+
+  void _addLog(String m) {
+    final n = DateTime.now();
+    String two(int v) => v.toString().padLeft(2, '0');
+    _logLines.add('[${two(n.hour)}:${two(n.minute)}:${two(n.second)}] $m');
+    if (_logLines.length > 80) _logLines.removeAt(0);
+    _emit({'t': 'log', 'lines': List<String>.from(_logLines)});
   }
 
   void _emitStatus() => _emit({
